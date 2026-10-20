@@ -1,6 +1,6 @@
 services:
   metersphere:
-    image: ghcr.io/cangyangguang/metersphere:v0.2.4
+    image: ghcr.io/cangyangguang/metersphere:v0.2.5
     container_name: metersphere
     platform: linux/amd64
     ports:

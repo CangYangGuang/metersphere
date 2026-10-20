@@ -30,7 +30,7 @@ docker compose up -d
 
 默认会创建独立的配置、数据和日志卷。停止服务但保留数据时执行 `docker compose down`；不要使用 `docker compose down -v`。
 
-详细说明见 [`release/v0.2.4/INSTALL.md`](release/v0.2.4/INSTALL.md)。
+详细说明见 [`release/v0.2.5/INSTALL.md`](release/v0.2.5/INSTALL.md)。
 
 MeterSphere 是新一代的开源持续测试工具，内置 AI 助手，让软件测试工作更简单、更高效，不再成为持续交付的瓶颈。
 

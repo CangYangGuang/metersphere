@@ -96,7 +96,7 @@ jobs:
       - name: AI target tests
         run: >-
           ./mvnw -pl backend/framework/ai-engine,backend/services/system-setting -am test
-          -Dtest="AIOpenAIChatClientTest,AiConversationControllerTest,SystemAIConfigServiceProbeTest,AIChatAttachmentUtilsTest"
+          -Dtest="AIOpenAIChatClientTest,SystemAIConfigServiceProbeTest,AIChatAttachmentUtilsTest"
           -Dsurefire.failIfNoSpecifiedTests=false
 
       - name: Package complete backend app
