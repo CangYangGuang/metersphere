@@ -12,6 +12,8 @@ import java.util.List;
 @Data
 public class DashboardFrontPageRequest extends DashboardBaseRequest{
 
+    private static final ZoneOffset DASHBOARD_ZONE_OFFSET = ZoneOffset.ofHours(8);
+
     @Schema(description = "是否全选")
     private boolean selectAll;
 
@@ -36,10 +38,10 @@ public class DashboardFrontPageRequest extends DashboardBaseRequest{
 
     public Long getToStartTime() {
         if (startTime == null && dayNumber != null && dayNumber > 0) {
-            LocalDate now = LocalDate.now();
+            LocalDate now = LocalDate.now(DASHBOARD_ZONE_OFFSET);
             LocalDate localDate = now.minusDays(dayNumber);
             LocalDateTime localDateTime = LocalDateTime.of(localDate, LocalTime.MIN);//当天零点
-            return localDateTime.toInstant(ZoneOffset.ofHours(8)).toEpochMilli();
+            return localDateTime.toInstant(DASHBOARD_ZONE_OFFSET).toEpochMilli();
         } else {
             return startTime;
         }
@@ -47,8 +49,8 @@ public class DashboardFrontPageRequest extends DashboardBaseRequest{
 
     public Long getToEndTime() {
         if (endTime == null && dayNumber != null && dayNumber > 0) {
-            LocalDateTime now = LocalDateTime.now();
-            return now.toInstant(ZoneOffset.ofHours(8)).toEpochMilli();
+            LocalDateTime now = LocalDateTime.now(DASHBOARD_ZONE_OFFSET);
+            return now.toInstant(DASHBOARD_ZONE_OFFSET).toEpochMilli();
         } else {
             return endTime;
         }
