@@ -89,7 +89,11 @@ public final class GrpcProtoCompiler {
         Path protocPath = Path.of(System.getProperty("user.home"), ".m2", "repository",
                 "com", "google", "protobuf", "protoc", protocVersion,
                 "protoc-" + protocVersion + "-" + classifier);
-        return Files.exists(protocPath) ? protocPath : null;
+        if (Files.exists(protocPath)) {
+            return protocPath;
+        }
+        Path mavenExecutableArtifact = protocPath.resolveSibling(protocPath.getFileName() + ".exe");
+        return Files.exists(mavenExecutableArtifact) ? mavenExecutableArtifact : null;
     }
 
     private static Descriptors.FileDescriptor buildFileDescriptor(DescriptorProtos.FileDescriptorSet descriptorSet)
