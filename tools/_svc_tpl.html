@@ -1,0 +1,34 @@
+<template>
+  <div class="grpc-service-definition-tab flex flex-col gap-[16px]">
+    <a-alert v-if="parseError" type="error" closable @close="parseError = ''">{{ parseError }}</a-alert>
+    <a-tabs v-model:active-key="sourceTab" type="rounded" size="small">
+      <a-tab-pane key="proto" :title="t('apiTestGrpc.sourceProtoFile')">
+        <div class="flex flex-col gap-[12px] pt-[8px]">
+          <div class="flex flex-wrap items-center gap-[8px]">
+            <a-upload :show-file-list="false" accept=".proto,text/plain" :custom-request="handleUploadProto"><a-button type="outline" size="small" class="arco-btn-outline--secondary">{{ t('apiTestGrpc.uploadProto') }}</a-button></a-upload>
+            <a-upload :show-file-list="false" accept=".proto,text/plain" :custom-request="handleUploadDependencyProto"><a-button type="outline" size="small" class="arco-btn-outline--secondary">{{ t('apiTestGrpc.uploadDependencyProto') }}</a-button></a-upload>
+            <a-button type="primary" size="small" :loading="grpcState.parseLoading" @click="handleParse">{{ t('apiTestGrpc.parseProto') }}</a-button>
+          </div>
+          <div v-if="dependencyProtoFiles.length" class="flex flex-wrap gap-[8px]"><a-tag v-for="item in dependencyProtoFiles" :key="item.fileName" size="small">{{ item.fileName }}</a-tag></div>
+          <a-button type="text" size="small" @click="showProtoEditor = !showProtoEditor">{{ showProtoEditor ? t('apiTestGrpc.hideProtoContent') : t('apiTestGrpc.viewEditProtoContent') }}</a-button>
+          <a-textarea v-if="showProtoEditor" v-model:model-value="grpcState.protoContent" :placeholder="t('apiTestGrpc.protoContentPlaceholder')" :auto-size="{ minRows: 8, maxRows: 16 }" @change="handleProtoChange" />
+          <div v-if="protoDiscoverSummary" class="text-[12px] text-[var(--color-text-3)]">{{ protoDiscoverSummary }}</div>
+        </div>
+      </a-tab-pane>
+      <a-tab-pane key="reflection" :title="t('apiTestGrpc.sourceReflection')">
+        <div class="flex flex-col gap-[12px] pt-[8px]">
+          <a-checkbox v-model:model-value="useTopServerAddress">{{ t('apiTestGrpc.useTopServerAddress') }}: {{ grpcState.serverAddress || '-' }}</a-checkbox>
+          <a-button type="text" size="small" @click="showCustomReflectionAddress = !showCustomReflectionAddress">{{ t('apiTestGrpc.reflectionCustomAddress') }}</a-button>
+          <a-input v-if="!useTopServerAddress || showCustomReflectionAddress" v-model:model-value="reflectionAddress" :placeholder="t('apiTestGrpc.serverAddressPlaceholder')" allow-clear class="max-w-[480px]" />
+          <a-form-item :label="t('apiTestGrpc.reflectionTimeout')" class="mb-0 max-w-[240px]"><a-input-number v-model:model-value="reflectionTimeout" :min="1000" :max="60000" :step="1000" class="w-full" /></a-form-item>
+          <a-switch v-model:model-value="reflectionUseTls" size="small"><template #checked>{{ t('apiTestGrpc.reflectionUseTls') }}</template><template #unchecked>{{ t('apiTestGrpc.reflectionPlaintext') }}</template></a-switch>
+          <a-button type="primary" size="small" :loading="reflectionLoading" @click="handleReflectionDiscoverClick">{{ t('apiTestGrpc.reflectionDiscover') }}</a-button>
+          <a-alert v-if="isReflectionOnly" type="info" class="text-[12px]">{{ t('apiTestGrpc.reflectionSourceTip', { address: reflectionSourceAddress }) }}</a-alert>
+          <div v-if="reflectionDiscoverSummary" class="text-[12px] text-[var(--color-text-3)]">{{ reflectionDiscoverSummary }}</div>
+        </div>
+      </a-tab-pane>
+    </a-tabs>
+    <div v-if="grpcDefinition?.protoVersion" class="rounded-[4px] border border-[var(--color-text-n8)] p-[12px]"><grpcProtoVersionPanel :version="grpcDefinition.protoVersion" :proto-id="grpcDefinition.protoId" :history="grpcDefinition.protoVersionHistory" :impact="grpcDefinition.protoChangeImpact" /></div>
+    <grpcMethodListPanel :grpc="grpcState" @use="handleUseMethod" />
+  </div>
+</template>

@@ -1,0 +1,126 @@
+name: Build and publish release image
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "!v0.1.0"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  IMAGE_NAME: ghcr.io/cangyangguang/metersphere
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Validate immutable release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          [[ "${tag}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || {
+            echo "Expected a stable semantic version tag, got ${tag}" >&2
+            exit 1
+          }
+          major=$((10#${BASH_REMATCH[1]}))
+          minor=$((10#${BASH_REMATCH[2]}))
+          patch=$((10#${BASH_REMATCH[3]}))
+          version_code=$((major * 1000000 + minor * 1000 + patch))
+          (( version_code >= 1001 )) || {
+            echo "Automated publication starts at v0.1.1" >&2
+            exit 1
+          }
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.15.0
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install frozen frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Frontend type check
+        working-directory: frontend
+        run: pnpm run type:check
+
+      - name: Frontend production build
+        working-directory: frontend
+        run: pnpm run build
+
+      - name: gRPC and API target tests
+        run: >-
+          ./mvnw -pl backend/services/api-test -am test
+          -Dtest="*Grpc*,ApiDebugModuleControllerTests,ApiDefinitionModuleControllerTests,ApiScenarioModuleControllerTests,ApiLogRequestParserTest"
+          -Dsurefire.failIfNoSpecifiedTests=false
+
+      - name: AI target tests
+        run: >-
+          ./mvnw -pl backend/framework/ai-engine,backend/services/system-setting -am test
+          -Dtest="AIOpenAIChatClientTest,AiConversationControllerTest,SystemAIConfigServiceProbeTest,AIChatAttachmentUtilsTest"
+          -Dsurefire.failIfNoSpecifiedTests=false
+
+      - name: Package complete backend app
+        run: ./mvnw -pl backend/app -am package -DskipTests -DskipAntRunForJenkins=true
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Refuse to overwrite a published tag
+        shell: bash
+        run: |
+          if docker buildx imagetools inspect "${IMAGE_NAME}:${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "${IMAGE_NAME}:${GITHUB_REF_NAME} already exists; refusing to overwrite it." >&2
+            exit 1
+          fi
+
+      - name: Build and publish Linux amd64 image
+        id: image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.grpc-local
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+            ${{ env.IMAGE_NAME }}:latest
+          build-args: MS_VERSION=${{ github.ref_name }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
+
+      - name: Publish immutable digest summary
+        run: echo "${IMAGE_NAME}@${{ steps.image.outputs.digest }}" >> "${GITHUB_STEP_SUMMARY}"

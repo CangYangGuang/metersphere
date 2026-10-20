@@ -1,0 +1,18 @@
+# docker/Dockerfile.grpc-local 只需 backend/app/target/dependency 与 docker/ 脚本
+.git
+**/.git
+**/node_modules
+frontend/*
+!frontend/dist/
+!frontend/dist/**
+docs
+**/src/test
+**/target
+!backend/app/target/dependency/**
+!backend/app/target/dependency-batch/**
+!backend/services/api-test/target/
+!backend/services/api-test/target/metersphere-api-test-3.x.jar
+!backend/services/test-plan/target/
+!backend/services/test-plan/target/metersphere-test-plan-3.x.jar
+!backend/services/dashboard/target/
+!backend/services/dashboard/target/metersphere-dashboard-3.x.jar

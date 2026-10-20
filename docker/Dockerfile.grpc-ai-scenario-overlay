@@ -1,0 +1,7 @@
+ARG BASE_IMAGE=metersphere/local-grpc-batch:20260827-ai-generate-fix-v10
+FROM ${BASE_IMAGE}
+
+COPY backend/services/api-test/target/metersphere-api-test-3.x.jar /metersphere/lib/metersphere-api-test-3.x.jar
+
+ARG MS_VERSION=3.6.8-lts-grpc-wait-scenario-20260827
+RUN echo -n "${MS_VERSION}" > /tmp/MS_VERSION

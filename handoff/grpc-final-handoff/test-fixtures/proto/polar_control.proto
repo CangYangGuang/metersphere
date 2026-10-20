@@ -1,0 +1,1403 @@
+syntax = "proto3";
+
+/**
+ * PolarControl gRPC API 统一接口定义
+ * Version: 3.0
+ * 支持：
+ *  - 设备管理（列表、激活、状态）
+ *  - 变量模型（Variable）
+ *  - 变量读写（基于 UniquePath）
+ *  - 通用命令（method + parameters）
+ *  - 通用读写（Raw IO）
+ *  - 项目管理
+ *  - 记录器管理
+ */
+
+package Polar.v1;
+option csharp_namespace = "PolarControl.SDK.Entity";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+
+// ======================================================================
+// ENUM — DEVICE STATE
+// ======================================================================
+
+
+/**
+ * 设备运行状态
+ */
+enum DeviceRunningState {
+  //未连接
+  DEVICE_RUNNING_STATE_OFFLINE = 0;      
+  //已连接
+  DEVICE_RUNNING_STATE_ONLINE = 1;       
+  //正在观测
+  DEVICE_RUNNING_STATE_MEASURING = 2;    
+  //未知状态
+  DEVICE_RUNNING_STATE_NONE = 3;
+}
+
+/**
+ * 设备类型
+ */
+enum DeviceType {
+  DEVICE_TYPE_UNSPECIFIED = 0;
+
+  DEVICE_TYPE_SPEEDGOAT = 1;
+
+  reserved 2;
+
+  DEVICE_TYPE_XCP_ON_ETHERNET = 3;
+
+  DEVICE_TYPE_CAN = 4;
+
+  DEVICE_TYPE_LIN = 5;
+
+  DEVICE_TYPE_ETHERCAT = 6;
+
+  reserved 7;
+
+  DEVICE_TYPE_POLARBOX = 8;
+
+  DEVICE_TYPE_SCPI = 9;
+
+  DEVICE_TYPE_MODBUS = 10;
+
+  DEVICE_TYPE_VISA = 11;
+
+  DEVICE_TYPE_SOMEIP = 12;
+
+  DEVICE_TYPE_DDS = 13;
+
+  DEVICE_TYPE_SSH = 14;
+
+  DEVICE_TYPE_RPC = 15;
+}
+
+
+// ======================================================================
+// ENUM — VARIABLE TYPES
+// ======================================================================
+
+/**
+ * 变量类型枚举
+ */
+enum VariableType {
+  //未知类型
+  VARIABLE_TYPE_UNKNOWN = 0;
+  // 1x1 参数
+  VARIABLE_TYPE_PARAMETER = 0x11; 
+  // 1xN 或 Nx1
+  VARIABLE_TYPE_AXIS = 0x12; 
+  // 带轴的参数
+  VARIABLE_TYPE_CURVE = 0x13;
+  // 2D Map
+  VARIABLE_TYPE_MAP = 0x14;   
+  // n x n block
+  VARIABLE_TYPE_VALUEBLOCK = 0x15;  
+  // 3D 数据块
+  VARIABLE_TYPE_CUBOID = 0x16;  
+  // 4 维参数块
+  VARIABLE_TYPE_CUBOID_4 = 0x17; 
+  // 5 维参数块
+  VARIABLE_TYPE_CUBOID_5 = 0x18;             
+  // 信号
+  VARIABLE_TYPE_SIGNAL = 0x22;
+  // 测量数组
+  VARIABLE_TYPE_MEASUREMENT_ARRAY = 0x23;    
+  // 系统变量
+  VARIABLE_TYPE_SYSTEM_VARIABLE = 0x31;      
+  // 消息
+  VARIABLE_TYPE_MESSAGE = 0x40;     
+  // 结构体
+  VARIABLE_TYPE_STRUCT = 0x41;  
+  // 字符串
+  VARIABLE_TYPE_STRING = 0x50;               
+}
+
+
+// ======================================================================
+// MODEL — VARIABLE
+// ======================================================================
+
+/**
+ * 变量信息（设备下的单个变量）
+ */
+message VariableInfo {
+  // 变量名称
+  string name = 1;
+  // UI显示路径（父层级）
+  string display_path = 2; 
+  // 唯一变量路径（关键）
+  string unique_path = 3;
+  // 类型
+  VariableType variable_type = 4;              
+  // 当前变量值（json 结构：string/number/list/struct）
+  //google.protobuf.Value value = 5;   
+}
+
+/**
+ * 请求设备变量列表
+ */
+message ListVariablesRequest {
+  //如果是系统环境变量忽略该值
+  string device_id = 1;
+  //每页数量
+  int32 page_size = 2;
+  //页码
+  int32 page_index = 3;
+}
+
+/**
+ * 返回设备变量列表
+ */
+message ListVariablesReply {
+  //变量信息列表
+  repeated VariableInfo variables = 1;
+  //分页总数
+  int32 page_count=2;
+  //页码
+  int32 page_index=3;
+}
+
+/**
+ * 读取变量请求
+ */
+message ReadVariableRequest {
+  //设备ID，系统变量忽视该字段
+  string device_id = 1; 
+  //设备变量使用display_path，系统变量使用unique_path
+  string variable_path = 2;          
+}
+
+/**
+ * 读取变量响应
+ */
+message ReadVariableReply {
+  //bool success = 1;
+  //string error_message = 2;
+  reserved 1;
+  reserved 2;
+  // 变量值
+  google.protobuf.Value value = 3;      
+  // 可选：变量描述
+  VariableInfo variable = 4;            
+}
+
+/**
+ * 写入变量请求
+ */
+message WriteVariableRequest {
+  //设备Id
+  string device_id = 1;
+  //传入DisplayPath
+  string variable_path = 2;
+  // 写入的值
+  google.protobuf.Value value = 3;      
+}
+
+// ======================================================================
+// MODEL — DEVICE INFO
+// ======================================================================
+
+/**
+ * 设备基础信息
+ */
+message DeviceInfo {
+  //设备唯一 ID
+  string id = 1;                            
+  //设备名称
+  string name = 2;  
+  //是否启用
+  bool is_activated = 3;  
+  //统一运行状态
+  DeviceRunningState running_state = 4;     
+  //设备类型
+  DeviceType device_type = 5;               
+}
+
+/**
+ * 查询设备列表
+ */
+message ListDevicesRequest {
+  //可按类型过滤
+  DeviceType type_filter = 1;               
+}
+
+//设备集合模型
+message ListDevicesReply {
+  //设备集合
+  repeated DeviceInfo devices = 1;
+}
+//设备激活请求模型
+message ChangeDeviceActiveRequest {
+   //设备ID
+  string device_id = 1;
+}
+
+
+// ======================================================================
+// SERVICE — DEVICE SERVICE
+// ======================================================================
+
+//设备服务
+service DeviceService {
+   //获取所有设备
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesReply) {
+    option (google.api.http) = {
+      get: "/v1/devices"
+    };
+  }
+  //激活设备
+  rpc ActivateDevice(ChangeDeviceActiveRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/activate"
+      body: "*"
+    };
+  }
+  //反激活设备
+  rpc DeactivateDevice(ChangeDeviceActiveRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/deactivate"
+      body: "*"
+    };
+  }
+
+   /**
+   * 获取设备全部变量
+   */
+  rpc ListVariables(ListVariablesRequest) returns (ListVariablesReply) {
+    option (google.api.http) = {
+      get: "/v1/device/{device_id}/variables"
+      body: "*"
+    };
+  }
+
+  /**
+   * 读取设备变量
+   */
+  rpc ReadVariable(ReadVariableRequest) returns (ReadVariableReply) {
+    option (google.api.http) = {
+      post: "/v1/device/variable/read"
+      body: "*"
+    };
+  }
+
+  /**
+   * 写入设备变量
+   */
+  rpc WriteVariable(WriteVariableRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/variable/write"
+      body: "*"
+    };
+  }
+  //执行内部方法
+  rpc Execute(GenericCommandRequest) returns (GenericCommandReply) {
+    option (google.api.http) = {
+      post: "/v1/device/execute"
+      body: "*"
+    };
+  }
+}
+
+/**
+ * 通用命令请求
+ */
+message GenericCommandRequest {
+  //设备id
+  string device_id = 1;
+  // 命令名称，例如 "SendFrame"
+  string method = 2;                       
+  // 参数集合
+  repeated google.protobuf.Value parameters = 3;       
+}
+
+/**
+ * 通用命令响应
+ */
+message GenericCommandReply {
+  //返回的结果
+  google.protobuf.Value result = 1;            
+}
+
+
+// ======================================================================
+// CAN 设备服务
+// ======================================================================
+
+/**
+ * CAN 设备服务
+ *
+ * - SendCANFrame：发送 CAN 帧
+ * - SendJ1939Frame：发送 J1939 CAN 帧
+ */
+service CanService {
+
+  /**
+   * 发送 CAN 帧
+   */
+  rpc SendCANFrame(SendCANFrameRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/can/send"
+      body: "*"
+    };
+  }
+
+  /**
+   * 发送 J1939 CAN 帧
+   */
+  rpc SendJ1939Frame(SendJ1939FrameRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/can/j1939/send"
+      body: "*"
+    };
+  }
+}
+
+/** SendCANFrame 请求 */
+message SendCANFrameRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+
+  /** CanId（UInt）：CAN 报文 ID */
+  uint32 can_id = 2;
+
+  /** Data（Byte[]）：CAN 数据 */
+  bytes data = 3;
+
+  /** Type（int）：帧类型（Std：标准帧，Ext：扩展帧） */
+  int32 type = 4;
+
+  /** Format（int）：格式（Rtr：远程帧，Data：数据帧） */
+  int32 format = 5;
+
+  /** IsFD（Boolean）：是否 CAN-FD */
+  bool is_fd = 6;
+
+  /** IsBRS（Boolean）：是否开启 BRS */
+  bool is_brs = 7;
+}
+
+
+/** SendJ1939Frame 请求 */
+message SendJ1939FrameRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+
+  /** id（UInt）：J1939 报文 ID */
+  uint32 id = 2;
+
+  /** data（Byte[]）：报文数据 */
+  bytes data = 3;
+
+  /** IsFD（Boolean）：是否 CAN-FD */
+  bool is_fd = 4;
+
+  /** IsBRS（Boolean）：是否开启 BRS */
+  bool is_brs = 5;
+}
+
+// ======================================================================
+// LIN 设备服务
+// ======================================================================
+
+/**
+ * LIN 设备服务
+ *
+ * - SendLINFrame：主站发送 LIN 帧
+ * - SwitchTask：修改从站状态
+ * - SetSlaveTask：设置从站任务
+ */
+service LinService {
+
+  /**
+   * 主站发送 LIN 帧
+   *
+   * 入参：
+   * 1. CanId（byte）
+   * 2. Data（Byte[]）
+   * 3. dlc（byte）
+   * 4. checksumType（int）
+   *
+   * 出参：
+   * - true（Boolean）：是否成功
+   */
+  rpc SendLINFrame(LINRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/lin/send"
+      body: "*"
+    };
+  }
+
+  /**
+   * 修改从站状态（CSV：SwitchTask）
+   */
+  rpc SwitchTask(LINRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/lin/slave/switch"
+      body: "*"
+    };
+  }
+
+  /**
+   * 设置从站任务（CSV：SetSlaveTask）
+   */
+  rpc SetSlaveTask(LINRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/lin/slave/task/set"
+      body: "*"
+    };
+  }
+}
+
+/** SendLINFrame 请求 */
+message LINRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+
+  /** linId（byte）：取值范围 0~255 */
+  uint32 lin_id = 2;
+
+  /** Data（Byte[]）：帧数据 */
+  bytes data = 3;
+
+  /** dlc（byte）：数据长度，取值范围 0~255 */
+  uint32 dlc = 4;
+
+  /**
+   * slaveMode：校验和
+   * - true：增强型校验和（enhanced checksum）
+   * - false：经典校验和（classic checksum）
+   */
+  bool is_enhanced_checksum = 5;
+
+  /**
+   * slaveMode（int）：从站模式
+   * - true：ON
+   * - false：OFF
+   */
+  bool slave_mode = 6;
+}
+
+
+
+// ======================================================================
+// SCPI 设备服务
+// ======================================================================
+
+/**
+ * SCPI 设备服务
+ * - SendCommand：发送指定命令，获取返回数据
+ */
+service ScpiService {
+
+  /**
+   * 发送 SCPI 命令
+   */
+  rpc SendCommand(ScpiSendCommandRequest) returns (OperationResult) {
+    option (google.api.http) = {
+      post: "/v1/device/scpi/command"
+      body: "*"
+    };
+  }
+}
+
+/** SCPI SendCommand 请求 */
+message ScpiSendCommandRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+
+  /** command（string）：发送指令 */
+  string command = 2;
+
+  /** isNeedResponse（bool）：是否需要返回值 */
+  bool is_need_response = 3;
+}
+
+
+// ======================================================================
+// VISA 设备服务
+// ======================================================================
+
+/**
+ * VISA 设备服务
+ *
+ * 对应 CSV：VISA设备
+ * - GetSnapShot：获取波形数据
+ * - ScreenShot：示波器截图
+ */
+service VisaService {
+
+  /**
+   * 获取波形数据（CSV：GetSnapShot）
+   */
+  rpc GetSnapShot(VisaGetSnapShotRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/v1/device/visa/snapshot"
+      body: "*"
+    };
+  }
+
+  /**
+   * 示波器截图（CSV：ScreenShot）
+   *
+   */
+  rpc TakeScreenshot(VisaScreenShotRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/visa/screenshot"
+      body: "*"
+    };
+  }
+}
+
+/** VISA GetSnapShot 请求 */
+message VisaGetSnapShotRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+
+  /** data（string[]）：获取变量数组，例如 CH1、CH2 */
+  repeated string data = 2;
+
+  /** path（string）：波形数据存储路径 */
+  string path = 3;
+}
+
+/** VISA ScreenShot 请求 */
+message VisaScreenShotRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+
+  /** savepath（string）：截图保存路径 */
+  string savepath = 2;
+}
+
+// ======================================================================
+// Modbus 设备服务
+// ======================================================================
+
+/**
+ * Modbus 设备服务
+ *
+ */
+service ModbusService {
+
+  /**
+   * 自定义读取 Modbus 数据
+   */
+  rpc ReadRaw(ModbusReadRawRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/modbus/read"
+      body: "*"
+    };
+  }
+
+   /**
+   * 写入单个寄存器
+   */
+  rpc WriteRegister(ModbusWriteRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/modbus/register/write"
+      body: "*"
+    };
+  }
+
+  /**
+   * 批量写入寄存器或线圈
+   *
+   */
+  rpc WriteMultipleValues(ModbusWriteRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/modbus/register/write-multiple"
+      body: "*"
+    };
+  }
+
+  /**
+   * 写入线圈
+   */
+  rpc WriteCoil(ModbusWriteRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/modbus/coil/write"
+      body: "*"
+    };
+  }
+}
+
+/** Modbus ReadRaw 请求 */
+message ModbusReadRawRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+
+  /** fuctionType（string）：功能类型 */
+  string fuction_type = 2;
+
+  /** dataType（string）： */
+  string data_type = 3;
+
+  /** address（string）：读取起始地址 */
+  string address = 4;
+
+  /** length（ushort）：读取长度（0~65535） */
+  uint32 length = 5;
+
+  /** isArray（bool）：是否为数组 */
+  bool is_array = 6;
+}
+
+
+/**
+ * Modbus 寄存器写入请求
+ *
+ * 可用于：
+ * - 写单个寄存器
+ * - 批量写寄存器
+ */
+message ModbusWriteRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+
+  /** 起始寄存器地址 */
+  string address = 2;
+
+  /** 写入的寄存器值 */
+  VariantValue value = 3;
+}
+
+/**
+ * Modbus 寄存器写入值
+ *
+ * - 支持单值或同构数组
+ * - 同一请求中只能选择一种类型
+ */
+
+
+// ======================================================================
+// EtherCAT 设备服务
+// ======================================================================
+
+/**
+ * EtherCAT 设备服务
+ */
+service EtherCATService {
+
+  /**
+   * 获取从站列表
+   *
+   * 出参：
+   * - List<int>：从站设备ID列表
+   */
+  rpc GetSalveInfo(EtherCATRequest) returns (EtherCATGetSlaveInfoReply){
+    option (google.api.http) = {
+      post: "/v1/device/ethercat/slaves"
+      body: "*"
+    };
+  }
+
+  /**
+   * eeprom 文件下载
+   *
+   * 入参：
+   * 1. slaveId（Int）：从站 ID
+   * 2. filePath（String）：文件路径
+   *
+   * 出参：
+   * - true（Boolean）：是否成功
+   */
+  rpc EepRomDownload(EtherCATRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/v1/device/ethercat/eeprom/download"
+      body: "*"
+    };
+  }
+
+  /**
+   * eeprom 文件更新
+   *
+   * 入参：
+   * 1. slaveId（Int）：从站 ID
+   * 2. filePath（String）：文件路径
+   *
+   * 出参：
+   * - true（Boolean）：是否成功
+   */
+  rpc EepRomUpload(EtherCATRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/v1/device/ethercat/eeprom/upload"
+      body: "*"
+    };
+  }
+
+  /**
+   * 固件更新
+   */
+  rpc FirmUpdate(EtherCATRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/v1/device/ethercat/firmware/update"
+      body: "*"
+    };
+  }
+
+  /**
+   * 设置从站状态
+   */
+  rpc SetState(EtherCATRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/ethercat/slave/state"
+      body: "*"
+    };
+  }
+}
+
+/** EtherCAT 获取从站信息请求 */
+message EtherCATGetSlaveInfoRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+}
+
+/** 单个从站信息*/
+message EtherCATSlaveInfo {
+  /** 从站信息 */
+  google.protobuf.Struct data = 1;
+}
+
+/** EtherCAT 获取从站信息响应 */
+message EtherCATGetSlaveInfoReply {
+  /** 从站设备列表*/
+  repeated int32 slaves = 1;
+}
+
+/** EtherCAT 文件操作请求（Download/Upload/FirmUpdate 共用） */
+message EtherCATRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+
+  /** slaveId（Int）：从站 ID */
+  uint32 slave_id = 2;
+
+  /** filePath（String）：文件路径 */
+  string file_path = 3;
+
+    /**
+   * 从站状态
+   *    None,
+   *    Init,
+   *    PreOp,
+   *    Boot ,
+   *    SafeOp,
+   *    Operational ,
+   *    AckOrError
+   */
+  string target_state = 4;
+}
+
+
+
+// ======================================================================
+// Speedgoat 设备服务
+// ======================================================================
+
+/**
+ * Speedgoat 设备服务
+ *
+ */
+service SpeedgoatService {
+
+  /** 启动应用 */
+  rpc StartApplication(ApplicationRequest) returns (OperationResult) {
+    option (google.api.http) = {
+      post: "/v1/device/speedgoat/application/start"
+      body: "*"
+    };
+  }
+
+  /** 停止应用 */
+  rpc StopApplication(ApplicationRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/speedgoat/application/stop"
+      body: "*"
+    };
+  }
+
+  /** 上传应用*/
+  rpc UploadApplication(ApplicationRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/speedgoat/application/upload"
+      body: "*"
+    };
+  }
+
+  /** 重启设备*/
+  rpc RebootDevice(ApplicationRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/v1/device/speedgoat/application/reboot"
+      body: "*"
+    };
+  }
+}
+
+// ======================================================================
+// PolarBox 设备服务
+// ======================================================================
+
+/**
+ * PolarBox 设备服务
+ */
+service PolarBoxService {
+
+  /** 启动应用 */
+  rpc StartApplication(ApplicationRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/polarbox/application/start"
+      body: "*"
+    };
+  }
+
+  /** 停止应用 */
+  rpc StopApplication(ApplicationRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/polarbox/application/stop"
+      body: "*"
+    };
+  }
+
+  /** 上传应用 */
+  rpc UploadApplication(ApplicationRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/polarbox/application/upload"
+      body: "*"
+    };
+  }
+
+  /** 重启设备 */
+  rpc RebootDevice(ApplicationRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/v1/device/polarbox/application/reboot"
+      body: "*"
+    };
+  }
+}
+// ======================================================================
+// XCP 设备服务
+// ======================================================================
+
+/**XCP 设备服务 */
+service XCPService {
+
+  /* 下载数据集 */
+  rpc DownloadParameterSet(XCPRequest) returns (google.protobuf.Empty){
+    option (google.api.http) = {
+      post: "/v1/device/xcp/parameterset/download"
+      body: "*"
+    };
+  }
+
+  /** 上传数据集到指定目录 */
+  rpc UploadParameterSet(XCPRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/xcp/parameterset/upload"
+      body: "*"
+    };
+  }
+
+  /** 刷写数据集 */
+  rpc FlashParameterSet(XCPRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/device/xcp/parameterset/flash"
+      body: "*"
+    };
+  }
+}
+
+/** 通用：XCP请求 */
+message XCPRequest {
+  string device_id = 1;
+
+  string file_path = 2;
+}
+// ======================================================================
+// SSH 设备服务
+// ======================================================================
+
+/**SSH 设备服务 */
+service SSHService {
+
+  /* 发送命令 */
+  rpc SendCommand(SSHRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/ssh/command/send"
+      body: "*"
+    };
+  }
+}
+
+/** 通用：XCP请求 */
+message SSHRequest {
+
+  string device_id = 1;
+
+  string variable_path = 2;
+}
+// ======================================================================
+// RPC 设备服务
+// ======================================================================
+
+/**RPC 设备服务 */
+service RPCService {
+
+  /* 发送命令 */
+  rpc SendCommand(RPCRequest) returns (OperationResult){
+    option (google.api.http) = {
+      post: "/v1/device/rpc/command/send"
+      body: "*"
+    };
+  }
+}
+
+/** 通用：RPC请求 */
+message RPCRequest {
+  string device_id = 1;
+  string variable_path = 2;
+}
+
+// ======================================================================
+// 通用基础消息（复用）
+// ======================================================================
+
+/**
+ * 应用操作请求
+ *
+ * - StartApplication / StopApplication：只使用 app_name
+ * - UploadApplication：只使用 app_path
+ */
+message ApplicationRequest {
+  /** 设备唯一标识 */
+  string device_id = 1;
+
+   /** appName（String）：应用名称 */
+  string app_name = 2;
+
+  /** appPath（String）：应用路径 */
+  string app_path = 3;
+}
+
+/** 通用：操作返回 */
+message OperationResult {
+  bool success = 1;
+  string message = 2;
+  VariantValue data = 3;
+}
+
+/** ushort[] uint[]*/
+message UIntArray {
+  repeated uint32 values = 1;
+}
+
+/** short[] int[] */
+message IntArray {
+  repeated int32 values = 1;
+}
+
+/** float[] */
+message FloatArray {
+  repeated float values = 1;
+}
+
+/** double[] */
+message DoubleArray {
+  repeated double values = 1;
+}
+
+/** bool[] */
+message BoolArray {
+  repeated bool values = 1;
+}
+
+/** string[] */
+message StringArray {
+  repeated string values = 1;
+}
+
+message VariantValue {
+  oneof kind {
+
+    /** ushort */
+    uint32 ushort_value = 1;
+
+    /** uint */
+    uint32 uint_value = 2;
+
+    /** short */
+    int32 short_value = 3;
+
+    /** int */
+    int32 int_value = 4;
+
+    /** float */
+    float float_value = 5;
+
+    /** double */
+    double double_value = 6;
+
+    /** bool */
+    bool bool_value = 7;
+
+    string string_value= 8;
+
+    /** ushort[] */
+    UIntArray ushort_values = 9;
+
+    /** uint[] */
+    UIntArray uint_values = 10;
+
+    /** short[]*/
+    IntArray short_values = 11;
+
+    /** int[]*/
+    IntArray int_values = 12;
+
+    /** float[] */
+    FloatArray float_values = 13;
+
+    /** double[] */
+    DoubleArray double_values = 14;
+
+    /** bool[] */
+    BoolArray bool_values = 15;
+
+    /** string[] */
+    StringArray string_values = 16;
+  }
+}
+
+// ======================================================================
+// SERVICE — PROJECT
+// ======================================================================
+
+/*
+ * 实验状态
+ */
+enum ExperimentState {
+  //未连接
+  EXPERIMENT_STATE_IDLE = 0;
+  //已连接
+  EXPERIMENT_STATE_ONLINE = 1;
+  //观测中
+  EXPERIMENT_STATE_MEASURING = 2;
+  //未知状态
+  EXPERIMENT_STATE_NONE = 3;
+}
+
+//实验响应模型
+message ExperimentResponse {
+  //实验名称
+  string name = 1;
+  //实验状态
+  ExperimentState state = 2;
+  //是否激活
+  bool is_activated = 3;
+}
+
+//项目请求模型
+message ProjectRequest {
+  //项目目录
+  string project_path = 1;
+  //是否强制打开
+  bool is_direct = 2;
+}
+
+//项目响应模型
+message ProjectResponse {
+  //项目名称
+  string name = 1;
+  //文件目录
+  string local_path = 2;
+  //所有实验
+  repeated ExperimentResponse experiments = 3;
+}
+
+//版本响应模型
+message VersionResponse {
+  //版本号
+  string version = 1;
+}
+
+//创建项目请求模型
+message CreateProRequest {
+  //项目目录
+  string path = 1;
+  //项目名称
+  string project_name = 2;
+  //实验名称
+  string exp_name = 3;
+}
+
+//项目服务
+service ProjectService {
+  //加载项目
+  rpc Load(ProjectRequest) returns (ProjectResponse) {
+    option (google.api.http) = {
+      post: "/v1/project/load"
+      body: "*"
+    };
+  }
+  //创建项目
+  rpc Create(CreateProRequest) returns (ProjectResponse) {
+    option (google.api.http) = {
+      post: "/v1/project/create"
+      body: "*"
+    };
+  }
+  //保存项目
+  rpc Save(google.protobuf.Empty) returns (google.protobuf.Empty){
+      option (google.api.http) = {
+      post: "/v1/project/save"
+      body: "*"
+    };
+  }
+  //关闭项目
+  rpc CloseCurrent(google.protobuf.Empty) returns (google.protobuf.Empty){
+      option (google.api.http) = {
+      post: "/v1/project/close_current"
+      body: "*"
+    };
+  }
+  //获取当前项目
+  rpc GetCurrent(google.protobuf.Empty) returns (ProjectResponse){
+      option (google.api.http) = {
+      post: "/v1/project/get_current"
+      body: "*"
+    };
+  }
+  //获取版本号
+  rpc GetSoftVersion(google.protobuf.Empty) returns (VersionResponse){
+       option (google.api.http) = {
+      post: "/v1/project/get_soft_version"
+      body: "*"
+    };
+  }
+  //获取系统变量列表
+  rpc ListSystemVariables(ListVariablesRequest) returns (ListVariablesReply){
+        option (google.api.http) = {
+      post: "/v1/project/list_system_variables"
+      body: "*"
+    };
+  }
+  //读取系统变量
+  rpc ReadSystemVariable(ReadVariableRequest) returns (ReadVariableReply) {
+    option (google.api.http) = {
+      post: "/v1/project/systemvariable/read"
+      body: "*"
+    };
+  }
+
+  //写入系统变量
+  rpc WriteSystemVariable(WriteVariableRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/project/systemvariable/write"
+      body: "*"
+    };
+  }
+  
+  //开始观测
+  rpc StartMeasuring(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/project/start_measuring"
+      body: "*"
+    };
+  }
+  //停止观测
+  rpc StopMeasuring(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/project/stop_measuring"
+      body: "*"
+    };
+  }
+  //上线
+  rpc GoOnline(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/project/go_online"
+      body: "*"
+    };
+  }
+  //下线
+  rpc GoOffline(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/project/go_offline"
+      body: "*"
+    };
+  }
+}
+
+
+// ======================================================================
+// SERVICE — RECORDER
+// ======================================================================
+
+//记录器请求
+message RecorderRequest {
+  //记录器名称
+  string name = 1;
+  oneof modify_oneof{
+     //修改模型
+    RecorderModify modify = 2;
+  }
+  //新建目录
+  string file_path=3;
+}
+
+//记录器修改模型
+message RecorderModify{
+    oneof name_oneof{
+        //记录器名称
+        string name=1;
+    }
+    oneof is_split_file_oneof{
+        //是否分割
+        bool is_split_file=2;
+    }
+    oneof file_size_oneof{
+        //文件大小（mb）
+        int32 file_size=3;
+    }
+    oneof file_path_oneof{
+        //保存目录
+        string file_path=4;
+    }
+}
+
+//记录器响应模型
+message RecorderResponse {
+  oneof search_type{
+    //记录器集合
+    RecorderList recorder_list=1;
+    //单个记录器
+    Recorder single=2;
+  }
+}
+
+//记录器状态
+enum RecorderStatus {
+    //记录中
+    recording=0;
+    //等待规则通过
+    waiting_for_record=1;
+    //等待停止规则触发
+    waiting_to_stop=2;
+    //已停止
+    stoped=3;
+}
+
+//文件类型
+enum SignalRecorderType {
+    //mf4格式
+    mf4=0;
+    //mat格式
+    mat=1;
+    //csv格式
+    csv=2;
+}
+
+//记录器模型
+message Recorder {
+   //名称
+  string name = 1;
+  //记录器状态
+  RecorderStatus status=2;
+  //记录文件类型
+  SignalRecorderType recorder_type=3;
+  //文件保存目录
+  string file_path =4;
+  //bool is_activated = 5;
+  reserved 5;
+  //所有记录变量
+  repeated RecorderVariable connected_variable = 6;
+  //记录变量模型
+  message RecorderVariable {
+      //变量全局唯一路径
+     string unique_path=1;
+     //变量名称
+     string name = 2;
+     //显示层级路径
+     string display_path = 3;
+  }
+  //是否分割文件
+  bool is_split_file=7;
+  //分割文件大小
+  int32 file_size=8;
+}
+//记录器集合
+message RecorderList {
+    //所有记录器
+    repeated Recorder Recorders=1;
+}
+
+//记录管理服务
+service RecorderService {
+  //获取所有记录器
+  rpc GetAllRecorders(google.protobuf.Empty) returns (RecorderResponse){
+         option (google.api.http) = {
+      post: "/v1/recorder/get_all_recorders"
+      body: "*"
+    };
+  }
+  //获取单个记录器
+  rpc GetRecorder(RecorderRequest) returns (RecorderResponse){
+       option (google.api.http) = {
+      post: "/v1/recorder/get_recorder"
+      body: "*"
+    };
+  }
+  //删除记录器
+  rpc DeleteRecorder(RecorderRequest) returns (google.protobuf.Empty){
+         option (google.api.http) = {
+      post: "/v1/recorder/delete_recorder"
+      body: "*"
+    };
+  }
+  //创建记录器
+  rpc Create(RecorderRequest) returns (google.protobuf.Empty){
+         option (google.api.http) = {
+      post: "/v1/recorder/create"
+      body: "*"
+    };
+  }
+  //修改记录器
+  rpc Modify(RecorderRequest) returns (google.protobuf.Empty){
+          option (google.api.http) = {
+      post: "/v1/recorder/modify"
+      body: "*"
+    };
+  }
+  //开始记录
+  rpc Start(RecorderRequest) returns(google.protobuf.Empty){
+        option (google.api.http) = {
+      post: "/v1/recorder/start"
+      body: "*"
+    };
+  }
+  //停止记录
+  rpc Stop(RecorderRequest) returns(RecorderResponse){
+       option (google.api.http) = {
+      post: "/v1/recorder/stop"
+      body: "*"
+    };
+  }
+  //添加变量
+  rpc AddRecordVariable(Recorder.RecorderVariable)returns(google.protobuf.Empty){
+          option (google.api.http) = {
+      post: "/v1/recorder/add_record_variable"
+      body: "*"
+    };
+  }
+  //删除变量
+  rpc RemoveRecordVariable(Recorder.RecorderVariable)returns(google.protobuf.Empty){
+        option (google.api.http) = {
+      post: "/v1/recorder/remove_record_variable"
+      body: "*"
+    };
+  }
+}

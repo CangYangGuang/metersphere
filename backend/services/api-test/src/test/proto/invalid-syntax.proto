@@ -1,0 +1,3 @@
+syntax = "proto3"
+package broken
+message X { string name = 1

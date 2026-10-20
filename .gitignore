@@ -1,0 +1,69 @@
+# local env files
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-error.log*
+
+# Editor directories and files
+.idea/*
+!.idea/icon.png
+**/*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.mvn/*
+!.mvn/wrapper/
+.mvn/wrapper/*
+!.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+.history
+
+src/main/resources/static
+src/main/resources/templates
+target
+.settings
+.project
+.classpath
+.jython_cache
+qywx.json
+
+### flattened
+.flattened-pom.xml
+**/jmeter/lib/ext
+
+### claude
+.claude
+
+### local tooling/cache
+.codex
+.codex-tmp/
+.cursor
+.corepack
+.pnpm-store
+__pycache__/
+*.pyc
+
+# Local release/build artifacts
+deploy-backup-*/
+frontend/dist-new/
+frontend/*.log
+frontend/config/vite.config.codex-fast.ts
+outputs/
+tmp/
+~$*.docx
+
+# Local handoff evidence may contain account or environment data
+handoff/grpc-final-handoff/docs/images/
+handoff/grpc-final-handoff/docs/question_records_*.md
+
+# Local business/demo material contains workstation paths, internal endpoints, or device IDs
+docs/GRPC/MeterSphere_最新修改启用与演示全流程_20260826.md
+docs/GRPC/PolarControl_NewProject555_*.md
+docs/GRPC/pc_devices.csv
+tools/generate_polarcontrol_grpc_content.ps1

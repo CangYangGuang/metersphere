@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package msdemo.scenario;
+
+option java_package = "msdemo.scenario";
+option java_multiple_files = true;
+
+enum ResultCode {
+  RESULT_CODE_UNSPECIFIED = 0;
+  RESULT_CODE_OK = 1;
+  RESULT_CODE_FAILED = 2;
+}
+
+enum UserLevel {
+  USER_LEVEL_UNSPECIFIED = 0;
+  USER_LEVEL_NORMAL = 1;
+  USER_LEVEL_VIP = 2;
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_DRAFT = 1;
+  ORDER_STATUS_CREATED = 2;
+  ORDER_STATUS_PAID = 3;
+  ORDER_STATUS_SHIPPED = 4;
+}
+
+message CommonResult {
+  ResultCode code = 1;
+  string message = 2;
+  string traceId = 3;
+}
+
+message PageRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string keyword = 3;
+}
+
+message Money {
+  string currency = 1;
+  double amount = 2;
+}
+
+message Address {
+  string province = 1;
+  string city = 2;
+  string detail = 3;
+}
+
+message UserProfile {
+  string userId = 1;
+  string userName = 2;
+  UserLevel level = 3;
+  Address address = 4;
+}
+
+message Product {
+  string productId = 1;
+  string name = 2;
+  int32 stock = 3;
+  Money price = 4;
+}
+
+message OrderItem {
+  string productId = 1;
+  string productName = 2;
+  int32 quantity = 3;
+  Money price = 4;
+}
+
+message OrderSummary {
+  string orderId = 1;
+  string userId = 2;
+  OrderStatus status = 3;
+  repeated OrderItem items = 4;
+  Money total = 5;
+}

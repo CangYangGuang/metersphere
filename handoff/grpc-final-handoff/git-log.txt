@@ -1,0 +1,30 @@
+f7e00fe fix(grpc): commit final scenario grpc repairs and text attributes
+e90c35e fix(grpc): finalize scenario custom grpc step editing
+b5b7e03 fix(grpc): align scenario custom grpc editor with debug UI
+87a7c54 docs(grpc): record runtime settings and pre/post processor verification
+c74423c feat(grpc): apply runtime settings and execute pre/post processors
+403e87f feat(grpc): support grpc requests in scenarios
+cddedd5 docs(grpc): record scenario gRPC MCP-Chrome verification (TC-016 PASS)
+47d1f67 fix(grpc): ensure GRPC protocol option in scenario import drawer
+77a6e4d feat(grpc): support grpc requests in scenarios
+457af15 fix(report): open api case reports from deep links
+9fa8e89 fix(grpc): persist server address for saved cases
+ab864c6 fix(grpc): include grpc config when syncing saved api case
+0f0610c fix(grpc): pass grpc state when saving as api
+242ec0d fix(grpc): complete grpc save and bundle workflows
+9d4a767 fix(grpc): save debug requests without polymorphic parsing
+f96a24a fix(grpc): submit valid debug save request
+1a847e5 fix(grpc): show failed response status correctly
+a31141e fix(frontend): resolve api-test dev lint errors
+82f6888 fix(grpc): show proto parse error details
+0876e4b feat(grpc): optimize grpc debug panel layout
+352a499 feat(grpc): optimize grpc debug panel layout
+c01e101 docs(grpc): finalize ui regression summary
+24290b7 docs(grpc): verify ui regression phase 6
+f113f08 docs(grpc): verify ui regression phase 5
+04d6b51 docs(grpc): verify ui regression phase 4
+37d8310 docs(grpc): verify ui regression phase 3
+027f8c6 docs(grpc): finalize ui regression phase 2
+8d7d36b fix(grpc): support grpc case in scenario and test plan
+1f3e9aa docs(grpc): verify ui regression phase 2
+c1f5a93 docs(grpc): finalize ui regression phase 1

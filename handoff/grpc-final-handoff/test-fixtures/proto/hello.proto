@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package hello;
+
+option java_package = "hello";
+option java_multiple_files = true;
+
+// Standard mock fixture for verify4 / host.docker.internal:50051
+// Used in UI/API verification: HelloService / SayHello
+service HelloService {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+message HelloRequest {
+  string greeting = 1;
+}
+
+message HelloReply {
+  string reply = 1;
+}

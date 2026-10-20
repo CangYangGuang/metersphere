@@ -1,0 +1,12 @@
+ARG BASE_IMAGE=metersphere/local-grpc-batch:20260828-ai-image-preview-v20
+FROM ${BASE_IMAGE}
+
+COPY backend/services/api-test/target/metersphere-api-test-3.x.jar /metersphere/lib/metersphere-api-test-3.x.jar
+COPY backend/services/test-plan/target/metersphere-test-plan-3.x.jar /metersphere/lib/metersphere-test-plan-3.x.jar
+COPY backend/services/dashboard/target/metersphere-dashboard-3.x.jar /metersphere/lib/metersphere-dashboard-3.x.jar
+
+RUN rm -rf /metersphere/static && mkdir -p /metersphere/static
+COPY frontend/dist/ /metersphere/static/
+
+ARG MS_VERSION=3.6.8-lts-workbench-statistics-20260828
+RUN echo -n "${MS_VERSION}" > /tmp/MS_VERSION

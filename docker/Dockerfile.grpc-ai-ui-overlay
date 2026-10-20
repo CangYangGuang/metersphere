@@ -1,0 +1,10 @@
+ARG BASE_IMAGE=metersphere/local-grpc-batch:20260828-detailed-pdf-v19
+FROM ${BASE_IMAGE}
+
+COPY backend/services/api-test/target/metersphere-api-test-3.x.jar /metersphere/lib/metersphere-api-test-3.x.jar
+
+RUN rm -rf /metersphere/static && mkdir -p /metersphere/static
+COPY frontend/dist/ /metersphere/static/
+
+ARG MS_VERSION=3.6.8-lts-grpc-ai-ui-20260828
+RUN echo -n "${MS_VERSION}" > /tmp/MS_VERSION

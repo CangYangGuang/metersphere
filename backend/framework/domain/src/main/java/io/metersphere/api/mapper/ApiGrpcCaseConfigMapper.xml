@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.metersphere.api.mapper.ApiGrpcCaseConfigMapper">
+  <resultMap id="BaseResultMap" type="io.metersphere.api.domain.ApiGrpcCaseConfig">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="api_case_id" jdbcType="VARCHAR" property="apiCaseId" />
+    <result column="api_definition_id" jdbcType="VARCHAR" property="apiDefinitionId" />
+    <result column="proto_id" jdbcType="VARCHAR" property="protoId" />
+    <result column="service_name" jdbcType="VARCHAR" property="serviceName" />
+    <result column="method_name" jdbcType="VARCHAR" property="methodName" />
+    <result column="server_address" jdbcType="VARCHAR" property="serverAddress" />
+    <result column="descriptor_content" jdbcType="LONGVARCHAR" property="descriptorContent" />
+    <result column="request_json" jdbcType="LONGVARCHAR" property="requestJson" />
+    <result column="metadata" jdbcType="LONGVARCHAR" property="metadata" />
+    <result column="timeout" jdbcType="INTEGER" property="timeout" />
+    <result column="assertion_json" jdbcType="LONGVARCHAR" property="assertionJson" />
+    <result column="extract_json" jdbcType="LONGVARCHAR" property="extractJson" />
+    <result column="settings_json" jdbcType="LONGVARCHAR" property="settingsJson" />
+    <result column="pre_processor_json" jdbcType="LONGVARCHAR" property="preProcessorJson" />
+    <result column="post_processor_json" jdbcType="LONGVARCHAR" property="postProcessorJson" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_time" jdbcType="BIGINT" property="createTime" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_time" jdbcType="BIGINT" property="updateTime" />
+    <result column="deleted" jdbcType="BIT" property="deleted" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    id, api_case_id, api_definition_id, proto_id, service_name, method_name, server_address, descriptor_content,
+    request_json, metadata, timeout, assertion_json, extract_json, settings_json, pre_processor_json, post_processor_json,
+    create_user, create_time, update_user, update_time, deleted
+  </sql>
+
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_case_config
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="selectByApiCaseId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_case_config
+    where api_case_id = #{apiCaseId,jdbcType=VARCHAR}
+      and deleted = 0
+  </select>
+
+  <select id="selectDeletedByApiCaseId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_case_config
+    where api_case_id = #{apiCaseId,jdbcType=VARCHAR}
+      and deleted = 1
+  </select>
+
+  <insert id="insertSelective" parameterType="io.metersphere.api.domain.ApiGrpcCaseConfig">
+    insert into api_grpc_case_config
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">id,</if>
+      <if test="apiCaseId != null">api_case_id,</if>
+      <if test="apiDefinitionId != null">api_definition_id,</if>
+      <if test="protoId != null">proto_id,</if>
+      <if test="serviceName != null">service_name,</if>
+      <if test="methodName != null">method_name,</if>
+      <if test="serverAddress != null">server_address,</if>
+      <if test="descriptorContent != null">descriptor_content,</if>
+      <if test="requestJson != null">request_json,</if>
+      <if test="metadata != null">metadata,</if>
+      <if test="timeout != null">timeout,</if>
+      <if test="assertionJson != null">assertion_json,</if>
+      <if test="extractJson != null">extract_json,</if>
+      <if test="settingsJson != null">settings_json,</if>
+      <if test="preProcessorJson != null">pre_processor_json,</if>
+      <if test="postProcessorJson != null">post_processor_json,</if>
+      <if test="createUser != null">create_user,</if>
+      <if test="createTime != null">create_time,</if>
+      <if test="updateUser != null">update_user,</if>
+      <if test="updateTime != null">update_time,</if>
+      <if test="deleted != null">deleted,</if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">#{id,jdbcType=VARCHAR},</if>
+      <if test="apiCaseId != null">#{apiCaseId,jdbcType=VARCHAR},</if>
+      <if test="apiDefinitionId != null">#{apiDefinitionId,jdbcType=VARCHAR},</if>
+      <if test="protoId != null">#{protoId,jdbcType=VARCHAR},</if>
+      <if test="serviceName != null">#{serviceName,jdbcType=VARCHAR},</if>
+      <if test="methodName != null">#{methodName,jdbcType=VARCHAR},</if>
+      <if test="serverAddress != null">#{serverAddress,jdbcType=VARCHAR},</if>
+      <if test="descriptorContent != null">#{descriptorContent,jdbcType=LONGVARCHAR},</if>
+      <if test="requestJson != null">#{requestJson,jdbcType=LONGVARCHAR},</if>
+      <if test="metadata != null">#{metadata,jdbcType=LONGVARCHAR},</if>
+      <if test="timeout != null">#{timeout,jdbcType=INTEGER},</if>
+      <if test="assertionJson != null">#{assertionJson,jdbcType=LONGVARCHAR},</if>
+      <if test="extractJson != null">#{extractJson,jdbcType=LONGVARCHAR},</if>
+      <if test="settingsJson != null">#{settingsJson,jdbcType=LONGVARCHAR},</if>
+      <if test="preProcessorJson != null">#{preProcessorJson,jdbcType=LONGVARCHAR},</if>
+      <if test="postProcessorJson != null">#{postProcessorJson,jdbcType=LONGVARCHAR},</if>
+      <if test="createUser != null">#{createUser,jdbcType=VARCHAR},</if>
+      <if test="createTime != null">#{createTime,jdbcType=BIGINT},</if>
+      <if test="updateUser != null">#{updateUser,jdbcType=VARCHAR},</if>
+      <if test="updateTime != null">#{updateTime,jdbcType=BIGINT},</if>
+      <if test="deleted != null">#{deleted,jdbcType=BIT},</if>
+    </trim>
+  </insert>
+
+  <update id="updateByPrimaryKeySelective" parameterType="io.metersphere.api.domain.ApiGrpcCaseConfig">
+    update api_grpc_case_config
+    <set>
+      <if test="apiCaseId != null">api_case_id = #{apiCaseId,jdbcType=VARCHAR},</if>
+      <if test="apiDefinitionId != null">api_definition_id = #{apiDefinitionId,jdbcType=VARCHAR},</if>
+      <if test="protoId != null">proto_id = #{protoId,jdbcType=VARCHAR},</if>
+      <if test="serviceName != null">service_name = #{serviceName,jdbcType=VARCHAR},</if>
+      <if test="methodName != null">method_name = #{methodName,jdbcType=VARCHAR},</if>
+      <if test="serverAddress != null">server_address = #{serverAddress,jdbcType=VARCHAR},</if>
+      <if test="descriptorContent != null">descriptor_content = #{descriptorContent,jdbcType=LONGVARCHAR},</if>
+      <if test="requestJson != null">request_json = #{requestJson,jdbcType=LONGVARCHAR},</if>
+      <if test="metadata != null">metadata = #{metadata,jdbcType=LONGVARCHAR},</if>
+      <if test="timeout != null">timeout = #{timeout,jdbcType=INTEGER},</if>
+      <if test="assertionJson != null">assertion_json = #{assertionJson,jdbcType=LONGVARCHAR},</if>
+      <if test="extractJson != null">extract_json = #{extractJson,jdbcType=LONGVARCHAR},</if>
+      <if test="settingsJson != null">settings_json = #{settingsJson,jdbcType=LONGVARCHAR},</if>
+      <if test="preProcessorJson != null">pre_processor_json = #{preProcessorJson,jdbcType=LONGVARCHAR},</if>
+      <if test="postProcessorJson != null">post_processor_json = #{postProcessorJson,jdbcType=LONGVARCHAR},</if>
+      <if test="createUser != null">create_user = #{createUser,jdbcType=VARCHAR},</if>
+      <if test="createTime != null">create_time = #{createTime,jdbcType=BIGINT},</if>
+      <if test="updateUser != null">update_user = #{updateUser,jdbcType=VARCHAR},</if>
+      <if test="updateTime != null">update_time = #{updateTime,jdbcType=BIGINT},</if>
+      <if test="deleted != null">deleted = #{deleted,jdbcType=BIT},</if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+  <delete id="deleteByApiCaseIds">
+    delete from api_grpc_case_config
+    where api_case_id in
+    <foreach collection="apiCaseIds" item="apiCaseId" open="(" separator="," close=")">
+      #{apiCaseId,jdbcType=VARCHAR}
+    </foreach>
+  </delete>
+
+  <select id="selectActiveByProtoId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_case_config
+    where proto_id = #{protoId,jdbcType=VARCHAR}
+      and deleted = 0
+  </select>
+</mapper>

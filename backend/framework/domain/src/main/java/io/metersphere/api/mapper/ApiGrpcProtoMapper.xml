@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.metersphere.api.mapper.ApiGrpcProtoMapper">
+  <resultMap id="BaseResultMap" type="io.metersphere.api.domain.ApiGrpcProto">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="project_id" jdbcType="VARCHAR" property="projectId" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="file_name" jdbcType="VARCHAR" property="fileName" />
+    <result column="content" jdbcType="LONGVARCHAR" property="content" />
+    <result column="descriptor_content" jdbcType="LONGVARCHAR" property="descriptorContent" />
+    <result column="content_hash" jdbcType="VARCHAR" property="contentHash" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_time" jdbcType="BIGINT" property="createTime" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_time" jdbcType="BIGINT" property="updateTime" />
+    <result column="deleted" jdbcType="BIT" property="deleted" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, project_id, `name`, file_name, content, descriptor_content, content_hash, create_user,
+    create_time, update_user, update_time, deleted
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_proto
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+  <select id="selectByProjectIdAndContentHash" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_proto
+    where project_id = #{projectId,jdbcType=VARCHAR}
+      and content_hash = #{contentHash,jdbcType=VARCHAR}
+      and deleted = 0
+    limit 1
+  </select>
+  <select id="selectByProjectIdAndFileKeyOrderByCreateTime" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_proto
+    where project_id = #{projectId,jdbcType=VARCHAR}
+      and (
+        file_name = #{fileKey,jdbcType=VARCHAR}
+        or (`name` = #{fileKey,jdbcType=VARCHAR} and (file_name is null or file_name = ''))
+      )
+    order by create_time asc, id asc
+  </select>
+  <insert id="insertSelective" parameterType="io.metersphere.api.domain.ApiGrpcProto">
+    insert into api_grpc_proto
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="projectId != null">
+        project_id,
+      </if>
+      <if test="name != null">
+        `name`,
+      </if>
+      <if test="fileName != null">
+        file_name,
+      </if>
+      <if test="content != null">
+        content,
+      </if>
+      <if test="descriptorContent != null">
+        descriptor_content,
+      </if>
+      <if test="contentHash != null">
+        content_hash,
+      </if>
+      <if test="createUser != null">
+        create_user,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateUser != null">
+        update_user,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="deleted != null">
+        deleted,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="projectId != null">
+        #{projectId,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="fileName != null">
+        #{fileName,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null">
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="descriptorContent != null">
+        #{descriptorContent,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="contentHash != null">
+        #{contentHash,jdbcType=VARCHAR},
+      </if>
+      <if test="createUser != null">
+        #{createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=BIGINT},
+      </if>
+      <if test="updateUser != null">
+        #{updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=BIGINT},
+      </if>
+      <if test="deleted != null">
+        #{deleted,jdbcType=BIT},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="io.metersphere.api.domain.ApiGrpcProto">
+    update api_grpc_proto
+    <set>
+      <if test="projectId != null">
+        project_id = #{projectId,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null">
+        `name` = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="fileName != null">
+        file_name = #{fileName,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null">
+        content = #{content,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="descriptorContent != null">
+        descriptor_content = #{descriptorContent,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="contentHash != null">
+        content_hash = #{contentHash,jdbcType=VARCHAR},
+      </if>
+      <if test="createUser != null">
+        create_user = #{createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=BIGINT},
+      </if>
+      <if test="updateUser != null">
+        update_user = #{updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=BIGINT},
+      </if>
+      <if test="deleted != null">
+        deleted = #{deleted,jdbcType=BIT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

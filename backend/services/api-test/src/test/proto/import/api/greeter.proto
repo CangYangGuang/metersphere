@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package api;
+
+import "types/common.proto";
+
+service Greeter {
+  rpc SayHello (types.CommonRequest) returns (types.CommonReply);
+}

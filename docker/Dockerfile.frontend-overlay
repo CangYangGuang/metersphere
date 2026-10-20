@@ -1,0 +1,6 @@
+ARG BASE_IMAGE=ghcr.io/ethan-tao-nova/metersphere@sha256:ef9f3fd8257a96a482175764fa4f00c6fd694e086d7f74850eec9a2712c29fa0
+FROM ${BASE_IMAGE}
+
+# Keep the verified backend image unchanged and publish only the current frontend build.
+RUN rm -rf /metersphere/static && mkdir -p /metersphere/static
+COPY frontend/dist/ /metersphere/static/

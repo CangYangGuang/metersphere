@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package importtest;
+
+option java_package = "io.metersphere.api.grpc.demo";
+option java_multiple_files = true;
+
+import "other.proto";
+
+message ImportMessage {
+  string name = 1;
+}

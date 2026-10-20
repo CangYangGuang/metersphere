@@ -1,0 +1,50 @@
+FROM metersphere/metersphere-ce-allinone@sha256:3e76ef5993cc537b238a680485dda472654c6fdd118155bfb3adf15f07a87e0f
+
+ARG MS_VERSION=3.6.8-lts-grpc-local
+# protoc 版本需与后端 GrpcProtoCompiler.DEFAULT_PROTOC_VERSION(3.25.5 -> release v25.5) 对应
+ARG PROTOC_VERSION=25.5
+ARG PROTOC_SHA256=e1ed237a17b2e851cf9662cb5ad02b46e70ff8e060e05984725bc4b4228c6b28
+
+# 安装 protoc(gRPC proto 解析依赖)。同时设置 PROTOC 环境变量并放置到 appuser 的本地 m2 路径,
+# 覆盖后端 resolveProtocExecutable 的三种查找方式(env / -Dprotoc.executable / 本地 m2)。
+# 放在业务文件 COPY 之前，避免前后端改动使固定工具层失效。
+RUN set -eu; \
+    curl -fsSL -o /tmp/protoc.zip "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"; \
+    echo "${PROTOC_SHA256}  /tmp/protoc.zip" | sha256sum -c -; \
+    unzip -o /tmp/protoc.zip -d /usr/local/protoc; \
+    rm -f /tmp/protoc.zip; \
+    chmod +x /usr/local/protoc/bin/protoc; \
+    M2DIR=/home/appuser/.m2/repository/com/google/protobuf/protoc/3.25.5; \
+    mkdir -p "$M2DIR"; \
+    cp /usr/local/protoc/bin/protoc "$M2DIR/protoc-3.25.5-linux-x86_64"; \
+    chmod +x "$M2DIR/protoc-3.25.5-linux-x86_64"; \
+    chown -R appuser /home/appuser/.m2; \
+    /usr/local/protoc/bin/protoc --version
+
+ENV PROTOC=/usr/local/protoc/bin/protoc \
+    MS_GRPC_REFLECTION_ALLOW_PRIVATE_NETWORKS=true
+
+# 本地构建的应用类与资源(含前端静态资源)覆盖基础镜像
+COPY backend/app/target/dependency-batch/BOOT-INF/classes/ /metersphere/
+COPY backend/app/target/dependency-batch/META-INF/ /metersphere/META-INF/
+
+# The Maven resource directory can retain hashed assets from earlier frontend builds.
+# Publish only the current dist so cached HTML cannot resolve an obsolete bundle.
+RUN rm -rf /metersphere/static && mkdir -p /metersphere/static
+COPY frontend/dist/ /metersphere/static/
+
+# 本地构建的依赖/模块 JAR 先放入暂存目录, 由脚本按 artifact 覆盖基础镜像 lib,
+# 消除同模块多版本并存(本地 -3.x 覆盖基础镜像 stock -3.6.8-lts), 并在仍重复时使构建失败
+COPY backend/app/target/dependency-batch/BOOT-INF/lib/ /tmp/newlib/
+COPY docker/dedup-jars.sh /tmp/dedup-jars.sh
+RUN sh /tmp/dedup-jars.sh /metersphere/lib /tmp/newlib && rm -f /tmp/dedup-jars.sh
+
+RUN echo -n "${MS_VERSION}" > /tmp/MS_VERSION
+
+# gRPC schema: community 镜像 Flyway 已到 3.6.4.1, 本地 gRPC 迁移 3.6.0.3/4/5 因版本号更低被跳过。
+# 在 embedded MySQL 就绪后、Java 应用启动前执行幂等补丁, 确保 api_grpc_* 表存在。
+COPY docker/grpc-schema-patch.sql /opt/metersphere/conf/grpc-schema-patch.sql
+COPY docker/grpc-schema-patch-upgrade.sql /opt/metersphere/conf/grpc-schema-patch-upgrade.sql
+COPY docker/init-grpc-schema.sh /shells/init-grpc-schema.sh
+RUN chmod +x /shells/init-grpc-schema.sh && \
+    sed -i '/wait-for-it.sh 127.0.0.1:3306 --timeout=120 --strict/a\    /shells/init-grpc-schema.sh' /shells/start-all.sh

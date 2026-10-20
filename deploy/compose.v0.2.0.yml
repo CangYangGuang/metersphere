@@ -1,0 +1,27 @@
+services:
+  metersphere:
+    image: ghcr.io/cangyangguang/metersphere:v0.2.0
+    container_name: metersphere-v0-2-0
+    platform: linux/amd64
+    ports:
+      - "8085:8081"
+    restart: unless-stopped
+    volumes:
+      - metersphere-v0-2-0-conf:/opt/metersphere/conf
+      - metersphere-v0-2-0-data:/opt/metersphere/data
+      - metersphere-v0-2-0-logs:/opt/metersphere/logs
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -fsS http://127.0.0.1:8081/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+
+volumes:
+  metersphere-v0-2-0-conf:
+    name: metersphere-v0.2.0-conf
+  metersphere-v0-2-0-data:
+    name: metersphere-v0.2.0-data
+  metersphere-v0-2-0-logs:
+    name: metersphere-v0.2.0-logs

@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package types;
+
+enum StatusCode {
+  STATUS_UNKNOWN = 0;
+  STATUS_OK = 1;
+}

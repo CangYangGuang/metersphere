@@ -1,0 +1,14 @@
+# Keep shell/docker files LF for reproducible container builds
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+docker/dedup-jars.sh text eol=lf
+docker/Dockerfile.grpc-local text eol=lf
+docker/Dockerfile.frontend-overlay text eol=lf
+.dockerignore text eol=lf
+
+# Force source files to text diff (avoid binary mis-detection on legacy blobs)
+*.java text diff
+*.vue text diff
+*.ts text diff
+*.md text diff

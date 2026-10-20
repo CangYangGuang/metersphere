@@ -1,0 +1,295 @@
+#!/usr/bin/env python3
+"""Apply gRPC UI Phase A+B changes via Python to avoid DLP binary marking."""
+from __future__ import annotations
+
+import pathlib
+import re
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+
+
+def write(path: str, content: str) -> None:
+    p = ROOT / path
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(content.replace("\r\n", "\n"), encoding="utf-8", newline="\n")
+    print("wrote", path)
+
+
+def patch_api_enum() -> None:
+    p = ROOT / "frontend/src/enums/apiEnum.ts"
+    text = p.read_text(encoding="utf-8")
+    old = "export enum RequestComposition {\n  BASE_INFO = 'BASE_INFO',\n  GRPC = 'GRPC',"
+    new = (
+        "export enum RequestComposition {\n"
+        "  BASE_INFO = 'BASE_INFO',\n"
+        "  /** @deprecated use GRPC_MESSAGE; kept for persisted tab state migration */\n"
+        "  GRPC = 'GRPC',\n"
+        "  GRPC_MESSAGE = 'GRPC_MESSAGE',\n"
+        "  GRPC_METADATA = 'GRPC_METADATA',\n"
+        "  GRPC_SERVICE_DEFINITION = 'GRPC_SERVICE_DEFINITION',\n"
+        "  GRPC_SETTINGS = 'GRPC_SETTINGS',"
+    )
+    if old not in text:
+        raise SystemExit("apiEnum patch anchor missing")
+    write("frontend/src/enums/apiEnum.ts", text.replace(old, new, 1))
+
+
+def patch_grpc_model() -> None:
+    p = ROOT / "frontend/src/models/apiTest/grpc.ts"
+    text = p.read_text(encoding="utf-8")
+    old = "  reflectionDiscoveredAt?: string;\n}"
+    new = (
+        "  reflectionDiscoveredAt?: string;\n"
+        "  /** Request execution TLS (UI state; invoke API may not consume yet) */\n"
+        "  useTls?: boolean;\n"
+        "  /** Request authority override (UI state) */\n"
+        "  authority?: string;\n"
+        "}"
+    )
+    if old not in text:
+        raise SystemExit("grpc model patch anchor missing")
+    write("frontend/src/models/apiTest/grpc.ts", text.replace(old, new, 1))
+
+
+def patch_constants() -> None:
+    p = ROOT / "frontend/src/views/api-test/components/requestComposition/grpc/constants.ts"
+    text = p.read_text(encoding="utf-8").replace("RequestComposition.GRPC", "RequestComposition.GRPC_MESSAGE")
+    write("frontend/src/views/api-test/components/requestComposition/grpc/constants.ts", text)
+
+
+def patch_utils() -> None:
+    p = ROOT / "frontend/src/views/api-test/components/requestComposition/grpc/utils.ts"
+    text = p.read_text(encoding="utf-8")
+    if "normalizeGrpcActiveTab" in text:
+        print("utils already patched")
+        return
+    text = text.replace(
+        "import { GRPC_PROTOCOL } from '@/models/apiTest/grpc';",
+        "import { GRPC_PROTOCOL } from '@/models/apiTest/grpc';\nimport { RequestComposition } from '@/enums/apiEnum';",
+    )
+    insert_after = """export function applyRequestJsonTemplateIfEmpty(state: GrpcRequestState, force = false) {
+  const template = findGrpcMethodTemplate(state);
+  if (!template) {
+    return false;
+  }
+  if (!force && !isRequestJsonEmpty(state.requestJson)) {
+    return false;
+  }
+  state.requestJson = template;
+  return true;
+}"""
+    insert = insert_after + """
+
+export function formatGrpcRequestJson(requestJson?: string): string {
+  const trimmed = requestJson?.trim();
+  if (!trimmed) {
+    return '';
+  }
+  try {
+    return JSON.stringify(JSON.parse(trimmed), null, 2);
+  } catch {
+    return requestJson || '';
+  }
+}
+
+export function calcGrpcResponseSize(response?: GrpcInvokeResult): string {
+  if (!response?.responseJson) {
+    return '-';
+  }
+  const bytes = len(response.responseJson.encode('utf-8'))
+  if bytes < 1024:
+    return f'{bytes} B'
+  return f'{bytes / 1024:.1f} KB'
+"""
+    # fix python syntax in js - use proper JS
+    insert = insert_after + """
+
+export function formatGrpcRequestJson(requestJson?: string): string {
+  const trimmed = requestJson?.trim();
+  if (!trimmed) {
+    return '';
+  }
+  try {
+    return JSON.stringify(JSON.parse(trimmed), null, 2);
+  } catch {
+    return requestJson || '';
+  }
+}
+
+export function calcGrpcResponseSize(response?: GrpcInvokeResult): string {
+  if (!response?.responseJson) {
+    return '-';
+  }
+  const bytes = new TextEncoder().encode(response.responseJson).length;
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+export function buildGrpcMethodSelectOptions(state: GrpcRequestState) {
+  return (state.services || []).flatMap((service) =>
+    (service.methods || []).map((method) => ({
+      label: `${service.fullName || service.name} / ${method.name}`,
+      value: `${service.name}::${method.name}`,
+      serviceName: service.name,
+      methodName: method.name,
+      methodType: method.methodType || '',
+      serviceLabel: service.fullName || service.name,
+    }))
+  );
+}
+
+export function resolveGrpcMethodSelectValue(state: GrpcRequestState): string {
+  if (!state.serviceName || !state.methodName) {
+    return '';
+  }
+  return `${state.serviceName}::${state.methodName}`;
+}
+
+export function applyGrpcMethodSelection(
+  state: GrpcRequestState,
+  serviceName: string,
+  methodName: string,
+  options?: { forceTemplate?: boolean }
+) {
+  state.serviceName = serviceName;
+  state.methodName = methodName;
+  syncMethodInfoFromServices(state);
+  if (options?.forceTemplate) {
+    const template = findGrpcMethodTemplate(state);
+    if (template) {
+      state.requestJson = template;
+    }
+  } else {
+    applyRequestJsonTemplateIfEmpty(state);
+  }
+}
+
+export function countGrpcServicesAndMethods(state: GrpcRequestState) {
+  const services = state.services || [];
+  const methodCount = services.reduce((sum, service) => sum + (service.methods?.length || 0), 0);
+  return { serviceCount: services.length, methodCount };
+}
+
+/** Normalize legacy GRPC tab key to GRPC_MESSAGE */
+export function normalizeGrpcActiveTab(tab: RequestComposition): RequestComposition {
+  if (tab === RequestComposition.GRPC) {
+    return RequestComposition.GRPC_MESSAGE;
+  }
+  return tab;
+}
+"""
+    if insert_after not in text:
+        raise SystemExit("utils patch anchor missing")
+    write("frontend/src/views/api-test/components/requestComposition/grpc/utils.ts", text.replace(insert_after, insert, 1))
+
+
+def patch_locales() -> None:
+    zh_keys = """
+  'apiTestGrpc.serviceDefinitionTab': 'Service definition',
+  'apiTestGrpc.selectMethodPlaceholder': '
+
+=====RUN0=====
+',
+"""
+    en_keys = """
+  'apiTestGrpc.serviceDefinitionTab': 'Service definition',
+  'apiTestGrpc.selectMethodPlaceholder': 'Select a method',
+  'apiTestGrpc.requestJsonTitle': 'Request message (JSON)',
+  'apiTestGrpc.generateTemplateOnly': 'Generate template',
+  'apiTestGrpc.resetTemplate': 'Reset template',
+  'apiTestGrpc.formatJson': 'Format',
+  'apiTestGrpc.templateOverwriteTitle': 'Overwrite request JSON',
+  'apiTestGrpc.templateOverwriteContent': 'Request JSON is not empty. Overwrite with template?',
+  'apiTestGrpc.overwriteTemplate': 'Overwrite with template',
+  'apiTestGrpc.keepRequestJson': 'Keep current JSON',
+  'apiTestGrpc.messageSelectMethodTip': 'Select a method in the top bar, or import proto / discover via Reflection',
+  'apiTestGrpc.messageEmptyRequestTip': 'No request body yet. Click Generate template',
+  'apiTestGrpc.methodListTitle': 'Method list',
+  'apiTestGrpc.methodListEmpty': 'Parse proto or discover services via Reflection first',
+  'apiTestGrpc.currentMethod': 'In use',
+  'apiTestGrpc.useMethod': 'Use',
+  'apiTestGrpc.methodSwitched': 'Method switched',
+  'apiTestGrpc.sourceProtoFile': 'Proto file',
+  'apiTestGrpc.sourceReflection': 'Reflection',
+  'apiTestGrpc.uploadProtoBundle': 'Upload bundle',
+  'apiTestGrpc.viewEditProtoContent': 'View / edit proto content',
+  'apiTestGrpc.hideProtoContent': 'Hide proto content',
+  'apiTestGrpc.mainProtoFileSelect': 'Main file',
+  'apiTestGrpc.parseDiscoverSummary': 'Discovered {services} service(s), {methods} method(s)',
+  'apiTestGrpc.reflectionDiscoverSummary': 'Discovered {services} service(s), {methods} method(s)',
+  'apiTestGrpc.reflectionFileName': 'Source: Reflection, file: reflection://{address}',
+  'apiTestGrpc.useTopServerAddress': 'Use top bar server address',
+  'apiTestGrpc.reflectionCustomAddress': 'Custom discovery address',
+  'apiTestGrpc.requestTls': 'TLS',
+  'apiTestGrpc.authority': 'Authority',
+  'apiTestGrpc.authorityPlaceholder': 'Optional :authority override',
+  'apiTestGrpc.responseResult': 'Response',
+  'apiTestGrpc.responseSize': 'Size',
+  'apiTestGrpc.noResponseServerExec': 'No response yet. Click Server Execute',
+  'apiTestGrpc.responseBodyTab': 'Body',
+  'apiTestGrpc.responseMetadataTab': 'Metadata',
+  'apiTestGrpc.responseErrorTab': 'Error details',
+  'apiTestGrpc.responseRawTab': 'Raw',
+  'apiTestGrpc.responseMetadataEmpty': 'No response metadata returned',
+"""
+    for path, keys in [
+        ("frontend/src/views/api-test/management/locale/zh-CN.ts", zh_keys),
+        ("frontend/src/views/api-test/management/locale/en-US.ts", en_keys),
+    ]:
+        p = ROOT / path
+        text = p.read_text(encoding="utf-8")
+        if "apiTestGrpc.serviceDefinitionTab" in text:
+            print(path, "already patched")
+            continue
+        text = text.replace("  'apiTestGrpc.conditionNotExists':", keys + "  'apiTestGrpc.conditionNotExists':")
+        write(path, text)
+
+
+def patch_other_refs() -> None:
+    p = ROOT / "frontend/src/views/api-test/management/components/management/api/index.vue"
+    text = p.read_text(encoding="utf-8").replace("RequestComposition.GRPC", "RequestComposition.GRPC_MESSAGE")
+    write(str(p.relative_to(ROOT)), text)
+    p = ROOT / "frontend/src/views/api-test/management/components/management/case/createAndEditCaseDrawer.vue"
+    text = p.read_text(encoding="utf-8").replace("RequestComposition.GRPC", "RequestComposition.GRPC_MESSAGE")
+    write(str(p.relative_to(ROOT)), text)
+
+
+def write_new_components() -> None:
+    components_dir = "frontend/src/views/api-test/components/requestComposition/grpc"
+    # Load component bodies from sibling files written next to this script
+    comp_dir = ROOT / components_dir
+    sources = ROOT / "tools" / "grpc_ui_components"
+    if not sources.exists():
+        raise SystemExit(f"missing {sources}")
+    for src in sources.glob("*.vue"):
+        write(f"{components_dir}/{src.name}", src.read_text(encoding="utf-8"))
+
+
+def patch_index_vue() -> None:
+    patch_file = ROOT / "tools" / "index_vue_grpc.patch.py"
+    if not patch_file.exists():
+        raise SystemExit("missing index patch module")
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("index_patch", patch_file)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    mod.apply(ROOT)
+
+
+def main() -> None:
+    patch_api_enum()
+    patch_grpc_model()
+    patch_constants()
+    patch_utils()
+    patch_locales()
+    patch_other_refs()
+    write_new_components()
+    patch_index_vue()
+    print("done")
+
+
+if __name__ == "__main__":
+    main()

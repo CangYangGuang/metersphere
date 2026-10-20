@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.metersphere.api.mapper.ApiGrpcDefinitionMapper">
+  <resultMap id="BaseResultMap" type="io.metersphere.api.domain.ApiGrpcDefinition">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="api_definition_id" jdbcType="VARCHAR" property="apiDefinitionId" />
+    <result column="proto_id" jdbcType="VARCHAR" property="protoId" />
+    <result column="package_name" jdbcType="VARCHAR" property="packageName" />
+    <result column="service_name" jdbcType="VARCHAR" property="serviceName" />
+    <result column="method_name" jdbcType="VARCHAR" property="methodName" />
+    <result column="full_method_name" jdbcType="VARCHAR" property="fullMethodName" />
+    <result column="server_address" jdbcType="VARCHAR" property="serverAddress" />
+    <result column="method_type" jdbcType="VARCHAR" property="methodType" />
+    <result column="request_type" jdbcType="VARCHAR" property="requestType" />
+    <result column="response_type" jdbcType="VARCHAR" property="responseType" />
+    <result column="descriptor_content" jdbcType="LONGVARCHAR" property="descriptorContent" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_time" jdbcType="BIGINT" property="createTime" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_time" jdbcType="BIGINT" property="updateTime" />
+    <result column="deleted" jdbcType="BIT" property="deleted" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, api_definition_id, proto_id, package_name, service_name, method_name, full_method_name,
+    server_address, method_type, request_type, response_type, descriptor_content, create_user, create_time,
+    update_user, update_time, deleted
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_definition
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+  <select id="selectByApiDefinitionId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_definition
+    where api_definition_id = #{apiDefinitionId,jdbcType=VARCHAR}
+      and deleted = 0
+  </select>
+  <select id="selectDeletedByApiDefinitionId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_definition
+    where api_definition_id = #{apiDefinitionId,jdbcType=VARCHAR}
+      and deleted = 1
+  </select>
+  <select id="countByProtoId" resultType="long">
+    select count(*)
+    from api_grpc_definition
+    where proto_id = #{protoId,jdbcType=VARCHAR}
+      and deleted = 0
+  </select>
+  <select id="selectActiveByProtoId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_definition
+    where proto_id = #{protoId,jdbcType=VARCHAR}
+      and deleted = 0
+  </select>
+  <select id="selectActiveByFullMethodName" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from api_grpc_definition
+    where full_method_name = #{fullMethodName,jdbcType=VARCHAR}
+      and deleted = 0
+  </select>
+  <insert id="insertSelective" parameterType="io.metersphere.api.domain.ApiGrpcDefinition">
+    insert into api_grpc_definition
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="apiDefinitionId != null">
+        api_definition_id,
+      </if>
+      <if test="protoId != null">
+        proto_id,
+      </if>
+      <if test="packageName != null">
+        package_name,
+      </if>
+      <if test="serviceName != null">
+        service_name,
+      </if>
+      <if test="methodName != null">
+        method_name,
+      </if>
+      <if test="fullMethodName != null">
+        full_method_name,
+      </if>
+      <if test="serverAddress != null">
+        server_address,
+      </if>
+      <if test="methodType != null">
+        method_type,
+      </if>
+      <if test="requestType != null">
+        request_type,
+      </if>
+      <if test="responseType != null">
+        response_type,
+      </if>
+      <if test="descriptorContent != null">
+        descriptor_content,
+      </if>
+      <if test="createUser != null">
+        create_user,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateUser != null">
+        update_user,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+      <if test="deleted != null">
+        deleted,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="apiDefinitionId != null">
+        #{apiDefinitionId,jdbcType=VARCHAR},
+      </if>
+      <if test="protoId != null">
+        #{protoId,jdbcType=VARCHAR},
+      </if>
+      <if test="packageName != null">
+        #{packageName,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceName != null">
+        #{serviceName,jdbcType=VARCHAR},
+      </if>
+      <if test="methodName != null">
+        #{methodName,jdbcType=VARCHAR},
+      </if>
+      <if test="fullMethodName != null">
+        #{fullMethodName,jdbcType=VARCHAR},
+      </if>
+      <if test="serverAddress != null">
+        #{serverAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="methodType != null">
+        #{methodType,jdbcType=VARCHAR},
+      </if>
+      <if test="requestType != null">
+        #{requestType,jdbcType=VARCHAR},
+      </if>
+      <if test="responseType != null">
+        #{responseType,jdbcType=VARCHAR},
+      </if>
+      <if test="descriptorContent != null">
+        #{descriptorContent,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createUser != null">
+        #{createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=BIGINT},
+      </if>
+      <if test="updateUser != null">
+        #{updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=BIGINT},
+      </if>
+      <if test="deleted != null">
+        #{deleted,jdbcType=BIT},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="io.metersphere.api.domain.ApiGrpcDefinition">
+    update api_grpc_definition
+    <set>
+      <if test="apiDefinitionId != null">
+        api_definition_id = #{apiDefinitionId,jdbcType=VARCHAR},
+      </if>
+      <if test="protoId != null">
+        proto_id = #{protoId,jdbcType=VARCHAR},
+      </if>
+      <if test="packageName != null">
+        package_name = #{packageName,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceName != null">
+        service_name = #{serviceName,jdbcType=VARCHAR},
+      </if>
+      <if test="methodName != null">
+        method_name = #{methodName,jdbcType=VARCHAR},
+      </if>
+      <if test="fullMethodName != null">
+        full_method_name = #{fullMethodName,jdbcType=VARCHAR},
+      </if>
+      <if test="serverAddress != null">
+        server_address = #{serverAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="methodType != null">
+        method_type = #{methodType,jdbcType=VARCHAR},
+      </if>
+      <if test="requestType != null">
+        request_type = #{requestType,jdbcType=VARCHAR},
+      </if>
+      <if test="responseType != null">
+        response_type = #{responseType,jdbcType=VARCHAR},
+      </if>
+      <if test="descriptorContent != null">
+        descriptor_content = #{descriptorContent,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="createUser != null">
+        create_user = #{createUser,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=BIGINT},
+      </if>
+      <if test="updateUser != null">
+        update_user = #{updateUser,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=BIGINT},
+      </if>
+      <if test="deleted != null">
+        deleted = #{deleted,jdbcType=BIT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

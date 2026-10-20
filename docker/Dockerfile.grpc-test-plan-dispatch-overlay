@@ -1,0 +1,7 @@
+ARG BASE_IMAGE=metersphere/local-grpc-batch:20260827-execution-history-v13
+FROM ${BASE_IMAGE}
+
+COPY backend/services/test-plan/target/metersphere-test-plan-3.x.jar /metersphere/lib/metersphere-test-plan-3.x.jar
+
+ARG MS_VERSION=3.6.8-lts-grpc-test-plan-dispatch-20260828
+RUN echo -n "${MS_VERSION}" > /tmp/MS_VERSION

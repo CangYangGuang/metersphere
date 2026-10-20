@@ -1,0 +1,8 @@
+ARG BASE_IMAGE=metersphere/local-grpc-batch:20260827-ai-project-context-v8
+FROM ${BASE_IMAGE}
+
+RUN rm -rf /metersphere/static && mkdir -p /metersphere/static
+COPY frontend/dist/ /metersphere/static/
+
+ARG MS_VERSION
+RUN echo -n "${MS_VERSION}" > /tmp/MS_VERSION

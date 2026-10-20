@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package msdemo.scenario;
+
+option java_package = "msdemo.scenario";
+option java_multiple_files = true;
+
+import "scenario_common.proto";
+
+service UserService {
+  rpc CreateUser (CreateUserRequest) returns (CreateUserReply) {}
+  rpc GetUser (GetUserRequest) returns (GetUserReply) {}
+}
+
+service ProductService {
+  rpc ListProducts (ListProductsRequest) returns (ListProductsReply) {}
+  rpc GetInventory (GetInventoryRequest) returns (GetInventoryReply) {}
+}
+
+service OrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderReply) {}
+  rpc GetOrder (GetOrderRequest) returns (GetOrderReply) {}
+}
+
+service PaymentService {
+  rpc PayOrder (PayOrderRequest) returns (PayOrderReply) {}
+  rpc RefundOrder (RefundOrderRequest) returns (RefundOrderReply) {}
+}
+
+service ShippingService {
+  rpc ShipOrder (ShipOrderRequest) returns (ShipOrderReply) {}
+}
+
+service NotificationService {
+  rpc SendMessage (SendMessageRequest) returns (SendMessageReply) {}
+}
+
+message CreateUserRequest {
+  string userName = 1;
+  UserLevel level = 2;
+  Address address = 3;
+}
+
+message CreateUserReply {
+  CommonResult result = 1;
+  UserProfile user = 2;
+}
+
+message GetUserRequest {
+  string userId = 1;
+}
+
+message GetUserReply {
+  CommonResult result = 1;
+  UserProfile user = 2;
+}
+
+message ListProductsRequest {
+  PageRequest page = 1;
+  repeated string tags = 2;
+}
+
+message ListProductsReply {
+  CommonResult result = 1;
+  repeated Product products = 2;
+}
+
+message GetInventoryRequest {
+  string productId = 1;
+}
+
+message GetInventoryReply {
+  CommonResult result = 1;
+  string productId = 2;
+  int32 availableStock = 3;
+}
+
+message CreateOrderRequest {
+  string userId = 1;
+  repeated OrderItem items = 2;
+}
+
+message CreateOrderReply {
+  CommonResult result = 1;
+  OrderSummary order = 2;
+}
+
+message GetOrderRequest {
+  string orderId = 1;
+}
+
+message GetOrderReply {
+  CommonResult result = 1;
+  OrderSummary order = 2;
+}
+
+message PayOrderRequest {
+  string orderId = 1;
+  Money amount = 2;
+  string payChannel = 3;
+}
+
+message PayOrderReply {
+  CommonResult result = 1;
+  string paymentId = 2;
+  OrderStatus status = 3;
+}
+
+message RefundOrderRequest {
+  string orderId = 1;
+  string paymentId = 2;
+  Money amount = 3;
+  string reason = 4;
+}
+
+message RefundOrderReply {
+  CommonResult result = 1;
+  string refundId = 2;
+}
+
+message ShipOrderRequest {
+  string orderId = 1;
+  Address address = 2;
+}
+
+message ShipOrderReply {
+  CommonResult result = 1;
+  string trackingNo = 2;
+  OrderStatus status = 3;
+}
+
+message SendMessageRequest {
+  string targetUserId = 1;
+  string title = 2;
+  string content = 3;
+  map<string, string> variables = 4;
+}
+
+message SendMessageReply {
+  CommonResult result = 1;
+  string messageId = 2;
+}
