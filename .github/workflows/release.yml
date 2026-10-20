@@ -41,6 +41,9 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Prepare Maven wrapper
+        run: chmod +x mvnw
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

@@ -1,15 +1,15 @@
 # MeterSphere 工程公开交付与使用指南
 
 > 公开仓库：`https://github.com/CangYangGuang/metersphere`
-> 推荐版本：`v0.2.0`
+> 推荐版本：`v0.2.1`
 
 ## 1. 交付内容
 
 本项目通过公开 GitHub 仓库和公开 GHCR 镜像交付：
 
 - 完整可构建源码、测试和部署文件；
-- Git 标签 `v0.2.0`；
-- Docker 镜像 `ghcr.io/cangyangguang/metersphere:v0.2.0`；
+- Git 标签 `v0.2.1`；
+- Docker 镜像 `ghcr.io/cangyangguang/metersphere:v0.2.1`；
 - 根目录 `compose.yml`；
 - 安装说明、发布说明和已知限制。
 
@@ -22,7 +22,7 @@
 ```bash
 git clone https://github.com/CangYangGuang/metersphere.git
 cd metersphere
-git checkout v0.2.0
+git checkout v0.2.1
 docker compose pull
 docker compose up -d
 ```
@@ -88,7 +88,7 @@ pnpm run build
 cd ..
 
 ./mvnw -pl backend/app -am package -DskipTests -DskipAntRunForJenkins=true
-docker build -f docker/Dockerfile.grpc-local -t metersphere-local:v0.2.0 .
+docker build -f docker/Dockerfile.grpc-local -t metersphere-local:v0.2.1 .
 ```
 
 Windows PowerShell 中将 `./mvnw` 替换为 `.\mvnw.cmd`。
@@ -97,7 +97,7 @@ Windows PowerShell 中将 `./mvnw` 替换为 `.\mvnw.cmd`。
 
 - `README.md`
 - `compose.yml`
-- `deploy/compose.v0.2.0.yml`
-- `release/v0.2.0/INSTALL.md`
-- `release/v0.2.0/release-notes.md`
-- `release/v0.2.0/KNOWN_LIMITATIONS.md`
+- `deploy/compose.v0.2.1.yml`
+- `release/v0.2.1/INSTALL.md`
+- `release/v0.2.1/release-notes.md`
+- `release/v0.2.1/KNOWN_LIMITATIONS.md`
