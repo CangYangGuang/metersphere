@@ -71,6 +71,8 @@ jobs:
 
       - name: Frontend production build
         working-directory: frontend
+        env:
+          NODE_OPTIONS: --max-old-space-size=5120
         run: pnpm run build
 
       - name: gRPC and API target tests
