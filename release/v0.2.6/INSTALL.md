@@ -1,4 +1,4 @@
-# MeterSphere v0.2.5 安装说明
+# MeterSphere v0.2.6 安装说明
 
 ## 环境要求
 
@@ -13,7 +13,7 @@
 ```bash
 git clone https://github.com/CangYangGuang/metersphere.git
 cd metersphere
-git checkout v0.2.5
+git checkout v0.2.6
 docker compose pull
 docker compose up -d
 ```

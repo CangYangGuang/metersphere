@@ -102,6 +102,19 @@ jobs:
       - name: Package complete backend app
         run: ./mvnw -pl backend/app -am package -DskipTests -DskipAntRunForJenkins=true
 
+      - name: Explode backend package for image
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p backend/app/target/dependency-batch
+          (
+            cd backend/app/target/dependency-batch
+            jar -xf ../app-3.x.jar
+          )
+          test -d backend/app/target/dependency-batch/BOOT-INF/classes
+          test -d backend/app/target/dependency-batch/BOOT-INF/lib
+          test -d backend/app/target/dependency-batch/META-INF
+
       - uses: docker/setup-buildx-action@v3
 
       - uses: docker/login-action@v3
